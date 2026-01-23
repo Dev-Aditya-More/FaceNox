@@ -31,6 +31,17 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.compose.nav3)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.navigation.compose)
+
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+
+            implementation(libs.material.icons.extended)
+
+            implementation(libs.material.kolor)
+
+            implementation(libs.androidx.activityCompose)
         }
 
         commonTest.dependencies {
@@ -42,6 +53,9 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.mlkit.face.detection)
+
+            implementation(libs.androidx.activityCompose)
         }
 
         jvmMain.dependencies {
@@ -67,4 +81,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+compose.resources {
+    publicResClass = true
 }
