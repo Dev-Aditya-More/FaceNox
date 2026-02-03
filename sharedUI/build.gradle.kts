@@ -9,12 +9,13 @@ plugins {
 }
 
 kotlin {
-    androidTarget() //We need the deprecated target to have working previews
+    androidTarget()
 
     jvm()
 
     sourceSets {
         commonMain.dependencies {
+
             api(libs.compose.runtime)
             api(libs.compose.ui)
             api(libs.compose.foundation)
@@ -27,21 +28,23 @@ kotlin {
             implementation(libs.ktor.client.serialization)
             implementation(libs.ktor.serialization.json)
             implementation(libs.ktor.client.logging)
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.compose.nav3)
             implementation(libs.kotlinx.serialization.json)
-
-            implementation(libs.navigation.compose)
 
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
 
             implementation(libs.material.icons.extended)
 
+            implementation(libs.navigation.compose)
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.runtime)
+
             implementation(libs.material.kolor)
 
-            implementation(libs.androidx.activityCompose)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
 
         commonTest.dependencies {
@@ -55,7 +58,12 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.mlkit.face.detection)
 
+            implementation(libs.navigation.compose)
+            implementation(libs.androidx.lifecycle.viewmodel)
+            implementation(libs.androidx.lifecycle.runtime)
             implementation(libs.androidx.activityCompose)
+
+            implementation(libs.koin.android)
         }
 
         jvmMain.dependencies {

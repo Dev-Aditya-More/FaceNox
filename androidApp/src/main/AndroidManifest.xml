@@ -2,20 +2,25 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name=".FaceNoxApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="FaceNox"
-        android:theme="@android:style/Theme.Material.NoActionBar">
+        android:theme="@style/Theme.FaceNox">
+
         <activity
             android:name=".AppActivity"
+            android:theme="@style/Theme.FaceNox"
+            android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
-            android:launchMode="singleInstance"
-            android:windowSoftInputMode="adjustPan"
-            android:exported="true">
+            android:windowSoftInputMode="adjustResize">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
     </application>
 
 </manifest>

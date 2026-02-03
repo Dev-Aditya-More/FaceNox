@@ -32,4 +32,6 @@ kotlin {
 dependencies {
     implementation(project(":sharedUI"))
     implementation(libs.androidx.activityCompose)
+    implementation(libs.koin.android)
+    implementation("androidx.core:core-splashscreen:1.2.0")
 }

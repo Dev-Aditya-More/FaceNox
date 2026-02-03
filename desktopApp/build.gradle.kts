@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(project(":sharedUI"))
+    implementation(libs.koin.core)
 }
 
 compose.desktop {
