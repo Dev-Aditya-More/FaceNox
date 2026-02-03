@@ -21,7 +21,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.viewmodel.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,12 +33,27 @@ import java.util.*
 fun DashboardScreen(
     onNewProject: () -> Unit,
     onOpenProject: (projectId: String, imageUri: String) -> Unit,
-    viewModel: DashboardViewModel = viewModel { DashboardViewModel() }
+    navController: NavHostController,
+    viewModel: DashboardViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var projectToDelete by remember { mutableStateOf<String?>(null) }
+
+    val savedStateHandle =
+        navController.currentBackStackEntry?.savedStateHandle
+
+    LaunchedEffect(Unit) {
+        savedStateHandle
+            ?.getStateFlow("PROJECT_SAVED", false)
+            ?.collect { saved ->
+                if (saved) {
+                    viewModel.onEvent(DashboardEvent.Refresh)
+                    savedStateHandle["PROJECT_SAVED"] = false
+                }
+            }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->

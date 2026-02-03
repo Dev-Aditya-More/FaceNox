@@ -1,14 +1,23 @@
 package org.aditya1875.facenox.feature.screens.editor
 
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.aditya1875.facenox.platform.ImageLoader
+import androidx.compose.ui.graphics.asImageBitmap
+import org.aditya1875.facenox.core.navigation.ProcessingOperation
+import org.aditya1875.facenox.platform.ImageProcessor
+import java.util.UUID
 
 class EditorViewModel(
     private val projectId: String?,
-    private val imageUri: String
+    private val imageUri: String,
+    private val imageLoader: ImageLoader,
+    private val imageProcessor: ImageProcessor
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -58,6 +67,7 @@ class EditorViewModel(
             is EditorIntent.Save -> handleSave()
             is EditorIntent.Export -> handleExport()
             is EditorIntent.Share -> handleShare()
+            else -> {}
         }
     }
 
@@ -66,55 +76,76 @@ class EditorViewModel(
             EditorReducer.reduce(currentState, intent)
         }
     }
-
     private fun loadImage() {
         viewModelScope.launch {
             _state.update { it.copy(isProcessing = true) }
 
-            try {
-                // TODO: Load image
-                _state.update { it.copy(isProcessing = false) }
-            } catch (e: Exception) {
+            val bitmap = imageLoader.loadImage(imageUri)
+
+            if (bitmap != null) {
                 _state.update {
                     it.copy(
-                        isProcessing = false,
-                        error = e.message ?: "Failed to load image"
+                        image = bitmap,
+                        isProcessing = false
                     )
                 }
+            } else {
+                _state.update { it.copy(isProcessing = false) }
+                _effect.emit(
+                    EditorEffect.ShowError("Failed to load image")
+                )
             }
         }
     }
 
     private fun handleApplyCrop() {
         viewModelScope.launch {
-            val cropRect = _state.value.cropRect ?: return@launch
+            val image = _state.value.image ?: return@launch
+            val rect = _state.value.cropRect ?: return@launch
 
             _state.update { it.copy(isProcessing = true) }
 
-            try {
-                // TODO: Apply crop
+            val cropped = imageProcessor.crop(
+                image = image,
+                rect = rect
+            )
 
-                _state.update {
-                    EditorReducer.reduce(
-                        it.copy(
-                            cropRect = null,
-                            isProcessing = false,
-                            selectedTool = EditorTool.SELECT
-                        ),
-                        EditorIntent.SelectTool(EditorTool.SELECT)
-                    )
-                }
-
-                _effect.emit(EditorEffect.ShowSnackbar("Crop applied"))
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isProcessing = false,
-                        error = e.message ?: "Failed to apply crop"
-                    )
-                }
+            _state.update {
+                it.copy(
+                    image = cropped,
+                    cropRect = null,
+                    selectedTool = EditorTool.SELECT,
+                    isProcessing = false
+                )
             }
         }
+    }
+
+    fun createCropRect(
+        imageWidth: Float,
+        imageHeight: Float,
+        ratio: Float
+    ): Rect {
+        val targetWidth: Float
+        val targetHeight: Float
+
+        if (imageWidth / imageHeight > ratio) {
+            targetHeight = imageHeight
+            targetWidth = imageHeight * ratio
+        } else {
+            targetWidth = imageWidth
+            targetHeight = imageWidth / ratio
+        }
+
+        val left = (imageWidth - targetWidth) / 2f
+        val top = (imageHeight - targetHeight) / 2f
+
+        return Rect(
+            left,
+            top,
+            left + targetWidth,
+            top + targetHeight
+        )
     }
 
     private fun handleCancelCrop() {
@@ -168,11 +199,7 @@ class EditorViewModel(
                     )
                 }
 
-                if (mockFaces.isEmpty()) {
-                    _effect.emit(EditorEffect.ShowSnackbar("No faces detected"))
-                } else {
-                    _effect.emit(EditorEffect.ShowSnackbar("${mockFaces.size} face(s) detected"))
-                }
+                _effect.emit(EditorEffect.ShowSnackbar("No faces detected"))
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
@@ -215,30 +242,27 @@ class EditorViewModel(
             }
         }
     }
-
     private fun handleSave() {
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true) }
+            val snapshot = EditorReducer.createSnapshot(_state.value)
 
-            try {
-                val savedProjectId = projectId ?: "project_${System.currentTimeMillis()}"
-                _state.update { it.copy(isSaving = false) }
-                _effect.emit(EditorEffect.NavigateToProcessing(savedProjectId, "save"))
-            } catch (e: Exception) {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        error = e.message ?: "Failed to save"
-                    )
-                }
-            }
+            val id = projectId ?: "project_${snapshot.timestamp}"
+
+            EditorSessionStore.save(id, snapshot)
+
+            _effect.emit(
+                EditorEffect.NavigateToProcessing(
+                    projectId = id,
+                    operation = ProcessingOperation.SAVE
+                )
+            )
         }
     }
 
     private fun handleExport() {
         viewModelScope.launch {
             val exportProjectId = projectId ?: "export_${System.currentTimeMillis()}"
-            _effect.emit(EditorEffect.NavigateToProcessing(exportProjectId, "export"))
+            _effect.emit(EditorEffect.NavigateToProcessing(exportProjectId, ProcessingOperation.EXPORT))
         }
     }
 

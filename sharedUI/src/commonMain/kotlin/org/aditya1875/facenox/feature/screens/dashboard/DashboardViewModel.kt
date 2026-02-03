@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.aditya1875.facenox.feature.screens.dashboard.models.ProjectStore
 
 class DashboardViewModel : ViewModel() {
 
@@ -36,8 +37,7 @@ class DashboardViewModel : ViewModel() {
             _state.update { it.copy(isLoading = true, error = null) }
 
             try {
-                // TODO: Load from repository
-                val projects = emptyList<Project>()
+                val projects = ProjectStore.getAll()
                 val stats = calculateStats(projects)
 
                 _state.update {
@@ -54,7 +54,9 @@ class DashboardViewModel : ViewModel() {
                         error = e.message ?: "Failed to load projects"
                     )
                 }
-                _effect.emit(DashboardEffect.ShowError(e.message ?: "Failed to load projects"))
+                _effect.emit(
+                    DashboardEffect.ShowError(e.message ?: "Failed to load projects")
+                )
             }
         }
     }

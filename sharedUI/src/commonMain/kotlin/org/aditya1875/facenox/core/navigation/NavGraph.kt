@@ -9,11 +9,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.aditya1875.facenox.feature.screens.dashboard.DashboardScreen
 import org.aditya1875.facenox.feature.screens.editor.EditorScreen
-import org.aditya1875.facenox.feature.screens.imageselection.ImagePicker
 import org.aditya1875.facenox.feature.screens.imageselection.ImageSelectionScreen
-import org.aditya1875.facenox.feature.screens.imageselection.rememberImagePicker
 import org.aditya1875.facenox.feature.screens.processing.ProcessingScreen
 import org.aditya1875.facenox.feature.screens.splash.SplashScreen
+import org.aditya1875.facenox.platform.ImagePicker
+import org.aditya1875.facenox.platform.rememberImagePicker
 
 @Composable
 fun FaceNoxNavGraph(
@@ -39,6 +39,7 @@ fun FaceNoxNavGraph(
                 onNewProject = {
                     navController.navigate(Route.ImageSelection)
                 },
+                navController = navController,
                 onOpenProject = { projectId, imageUri ->
                     navController.navigate(Route.Editor(projectId, imageUri))
                 }
@@ -46,7 +47,9 @@ fun FaceNoxNavGraph(
         }
 
         composable<Route.ImageSelection> {
-            val imagePicker = rememberImagePicker()
+
+            val picker = rememberImagePicker()
+
             ImageSelectionScreen(
                 onImageSelected = { imageUri ->
                     navController.navigate(Route.Editor(null, imageUri))
@@ -54,15 +57,7 @@ fun FaceNoxNavGraph(
                 onBackClick = {
                     navController.navigateUp()
                 },
-                onLaunchGallery = {
-                    imagePicker.pickImage { uri ->
-                        if (uri != null) {
-                            navController.navigate(
-                                Route.Editor(null, uri)
-                            )
-                        }
-                    }
-                }
+                picker = picker
             )
         }
 
@@ -89,16 +84,22 @@ fun FaceNoxNavGraph(
 
         composable<Route.Processing> { backStackEntry ->
             val processing: Route.Processing = backStackEntry.toRoute()
+            navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.set("PROJECT_SAVED", true)
             ProcessingScreen(
                 projectId = processing.projectId,
                 operation = processing.operation,
                 onComplete = {
                     navController.navigate(Route.Dashboard) {
-                        popUpTo(Route.Dashboard) { inclusive = true }
+                        popUpTo(Route.Dashboard) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
                     }
                 },
                 onCancel = {
-                    navController.navigateUp()
+                    navController.popBackStack()
                 }
             )
         }

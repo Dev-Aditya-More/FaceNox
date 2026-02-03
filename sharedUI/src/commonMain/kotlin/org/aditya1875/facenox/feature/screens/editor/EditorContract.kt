@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import org.aditya1875.facenox.core.navigation.ProcessingOperation
 
 // ==================== STATE ====================
 
@@ -34,6 +35,7 @@ data class EditorState(
     val canUndo: Boolean = false,
     val canRedo: Boolean = false,
     val showToolPanel: Boolean = true,
+    val showToolOptions: Boolean = false,
     val error: String? = null
 )
 
@@ -84,7 +86,7 @@ data class EditorSnapshot(
 sealed interface EditorIntent {
     data class SelectTool(val tool: EditorTool) : EditorIntent
     data object ToggleToolPanel : EditorIntent
-
+    data object CloseToolOptions : EditorIntent
     data class UpdateCropRect(val rect: Rect) : EditorIntent
     data object ApplyCrop : EditorIntent
     data object CancelCrop : EditorIntent
@@ -122,7 +124,7 @@ sealed interface EditorIntent {
 sealed interface EditorEffect {
     data class ShowSnackbar(val message: String) : EditorEffect
     data class ShowError(val message: String) : EditorEffect
-    data class NavigateToProcessing(val projectId: String, val operation: String) : EditorEffect
+    data class NavigateToProcessing(val projectId: String, val operation: ProcessingOperation) : EditorEffect
     data object NavigateBack : EditorEffect
     data class ShareImage(val uri: String) : EditorEffect
 }

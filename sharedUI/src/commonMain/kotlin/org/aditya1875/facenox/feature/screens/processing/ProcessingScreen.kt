@@ -18,81 +18,77 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.aditya1875.facenox.core.navigation.ProcessingOperation
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ProcessingScreen(
     projectId: String,
     operation: ProcessingOperation,
     onComplete: () -> Unit,
-    onCancel: () -> Unit
-) {
-    var state by remember { mutableStateOf<ProcessingState>(ProcessingState.Idle) }
-    
-    // Auto-start processing
-    LaunchedEffect(Unit) {
-        state = ProcessingState.Processing(0f, ProcessingStep.LOADING, 8)
-        
-        // Simulate processing steps
-        val steps = listOf(
-            ProcessingStep.LOADING,
-            ProcessingStep.APPLYING_EDITS,
-            ProcessingStep.APPLYING_FILTERS,
-            ProcessingStep.COMPRESSING,
-            ProcessingStep.SAVING
-        )
-        
-        steps.forEachIndexed { index, step ->
-            delay(800)
-            val progress = (index + 1) / steps.size.toFloat()
-            state = ProcessingState.Processing(progress, step, steps.size)
-        }
-        
-        delay(500)
-        state = ProcessingState.Success("/path/to/output.png")
-        
-        delay(2000)
-        onComplete()
+    onCancel: () -> Unit,
+    processingViewModel: ProcessingViewModel = koinViewModel {
+        parametersOf(projectId, operation)
     }
-    
+) {
+    val state by processingViewModel.state.collectAsState()
+
+    LaunchedEffect(Unit) {
+        processingViewModel.effect.collect { effect ->
+            when (effect) {
+                is ProcessingEffect.NavigateToDashboard -> {
+                    onComplete()
+                }
+                is ProcessingEffect.ShowSnackbar -> {
+                    // optional
+                }
+                is ProcessingEffect.ShareFile -> {
+                    // optional
+                }
+            }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         when (val currentState = state) {
-            is ProcessingState.Idle -> {
-                IdleState()
-            }
-            is ProcessingState.Processing -> {
-                ProcessingContent(
-                    progress = currentState.progress,
-                    currentStep = currentState.currentStep,
-                    totalSteps = currentState.totalSteps,
-                    onCancel = {
-                        state = ProcessingState.Cancelled
-                        onCancel()
-                    }
-                )
-            }
-            is ProcessingState.Success -> {
-                SuccessState(
-                    message = currentState.message,
-                    onContinue = onComplete
-                )
-            }
-            is ProcessingState.Error -> {
-                ErrorState(
-                    message = currentState.message,
-                    canRetry = currentState.canRetry,
-                    onRetry = {
-                        state = ProcessingState.Processing(0f, ProcessingStep.LOADING, 8)
-                    },
-                    onDismiss = onCancel
-                )
-            }
-            is ProcessingState.Cancelled -> {
-                CancelledState(onDismiss = onCancel)
-            }
+            is ProcessingState.Idle -> IdleState()
+
+            is ProcessingState.Processing -> ProcessingContent(
+                progress = currentState.progress,
+                currentStep = currentState.currentStep,
+                totalSteps = currentState.totalSteps,
+                onCancel = {
+                    processingViewModel.onEvent(ProcessingEvent.Cancel)
+                }
+            )
+
+            is ProcessingState.Success -> SuccessState(
+                message = currentState.message,
+                onContinue = {
+                    processingViewModel.onEvent(ProcessingEvent.Dismiss)
+                }
+            )
+
+            is ProcessingState.Error -> ErrorState(
+                message = currentState.message,
+                canRetry = currentState.canRetry,
+                onRetry = {
+                    processingViewModel.onEvent(ProcessingEvent.Retry)
+                },
+                onDismiss = {
+                    processingViewModel.onEvent(ProcessingEvent.Dismiss)
+                }
+            )
+
+            is ProcessingState.Cancelled -> CancelledState(
+                onDismiss = {
+                    processingViewModel.onEvent(ProcessingEvent.Dismiss)
+                }
+            )
         }
     }
 }

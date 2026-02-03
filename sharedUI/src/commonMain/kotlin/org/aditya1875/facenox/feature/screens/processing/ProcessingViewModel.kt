@@ -6,6 +6,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.aditya1875.facenox.core.navigation.ProcessingOperation
+import org.aditya1875.facenox.feature.screens.dashboard.Project
+import org.aditya1875.facenox.feature.screens.dashboard.ProjectType
+import org.aditya1875.facenox.feature.screens.dashboard.models.ProjectStore
+import org.aditya1875.facenox.feature.screens.dashboard.models.ProjectSummary
+import org.aditya1875.facenox.feature.screens.editor.EditorSessionStore
+import org.aditya1875.facenox.platform.ImageProcessor
 
 class ProcessingViewModel(
     private val projectId: String,
@@ -33,32 +39,48 @@ class ProcessingViewModel(
 
     private fun startProcessing() {
         viewModelScope.launch {
-            _state.value = ProcessingState.Idle
+            val snapshot = EditorSessionStore.get(projectId)
+                ?: error("Missing editor session")
 
-            try {
-                val steps = getProcessingSteps()
+            val steps = getProcessingSteps()
 
-                steps.forEachIndexed { index, step ->
-                    delay(800)
-                    val progress = (index + 1) / steps.size.toFloat()
-                    _state.value = ProcessingState.Processing(progress, step, steps.size)
-                }
-
-                delay(500)
-                val outputUri = "content://facenox/output_$projectId.png"
-                _state.value = ProcessingState.Success(outputUri)
-
-                delay(2000)
-                _effect.emit(ProcessingEffect.NavigateToDashboard(showSuccess = true))
-
-            } catch (e: Exception) {
-                _state.value = ProcessingState.Error(
-                    message = e.message ?: "Processing failed",
-                    canRetry = true
+            steps.forEachIndexed { index, step ->
+                _state.value = ProcessingState.Processing(
+                    progress = (index + 1) / steps.size.toFloat(),
+                    currentStep = step,
+                    totalSteps = steps.size
                 )
+                delay(300)
             }
+
+            _state.value = ProcessingState.Success(
+                outputUri = "content://facenox/output_$projectId.png"
+            )
+
+            val outputUri = "content://facenox/output_$projectId.png"
+
+            val now = System.currentTimeMillis()
+
+            val existing = ProjectStore.get(projectId)
+
+            ProjectStore.upsert(
+                Project(
+                    id = projectId,
+                    name = existing?.name ?: "Edit ${projectId.takeLast(4)}",
+                    imageUri = outputUri,
+                    thumbnail = null, // optional for now
+                    createdAt = existing?.createdAt ?: now,
+                    modifiedAt = now,
+                    type = ProjectType.BASIC_EDIT
+                )
+            )
+
+            _effect.emit(
+                ProcessingEffect.NavigateToDashboard(showSuccess = true)
+            )
         }
     }
+
 
     private fun handleCancel() {
         viewModelScope.launch {

@@ -16,17 +16,20 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.aditya1875.facenox.platform.ImagePicker
+import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ImageSelectionScreen(
     onImageSelected: (String) -> Unit,
     onBackClick: () -> Unit,
-    onLaunchGallery: () -> Unit,
-    viewModel: ImageSelectionViewModel = viewModel { ImageSelectionViewModel() }
+    viewModel: ImageSelectionViewModel = koinViewModel(),
+    picker: ImagePicker
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.selectedImageUri) {
         state.selectedImageUri?.let { uri ->
@@ -54,6 +57,8 @@ fun ImageSelectionScreen(
             )
         }
     ) { padding ->
+
+        val scope = rememberCoroutineScope()
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -63,7 +68,11 @@ fun ImageSelectionScreen(
                 LoadingState()
             } else {
                 SelectionContent(
-                    onGalleryClick = onLaunchGallery,
+                    onGalleryClick = {
+                        picker.pickImage { uri ->
+                            uri?.let(onImageSelected)
+                        }
+                    },
                     onCameraClick = { /* TODO: Camera */ }
                 )
             }

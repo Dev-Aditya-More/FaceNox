@@ -6,13 +6,18 @@ object EditorReducer {
 
     fun reduce(state: EditorState, intent: EditorIntent): EditorState {
         return when (intent) {
+
             is EditorIntent.SelectTool -> state.copy(
                 selectedTool = intent.tool,
-                showToolPanel = true
+                showToolOptions = true
             )
 
             is EditorIntent.ToggleToolPanel -> state.copy(
                 showToolPanel = !state.showToolPanel
+            )
+
+            is EditorIntent.CloseToolOptions -> state.copy(
+                showToolOptions = false
             )
 
             is EditorIntent.UpdateCropRect -> state.copy(
@@ -25,7 +30,11 @@ object EditorReducer {
                 } else {
                     state.appliedFilters + intent.filter
                 }
-                addToHistory(state.copy(appliedFilters = newFilters))
+                addToHistory(
+                    state.copy(
+                        appliedFilters = newFilters
+                    )
+                )
             }
 
             is EditorIntent.RemoveFilter -> {
@@ -34,23 +43,23 @@ object EditorReducer {
             }
 
             is EditorIntent.UpdateBrightness -> state.copy(
-                brightness = intent.value.coerceIn(-1f, 1f)
+                brightness = intent.value.coerceIn(-1f, 1f),
             )
 
             is EditorIntent.UpdateContrast -> state.copy(
-                contrast = intent.value.coerceIn(-1f, 1f)
+                contrast = intent.value.coerceIn(-1f, 1f),
             )
 
             is EditorIntent.UpdateSaturation -> state.copy(
-                saturation = intent.value.coerceIn(-1f, 1f)
+                saturation = intent.value.coerceIn(-1f, 1f),
             )
 
             is EditorIntent.ChangeBrushSize -> state.copy(
-                brushSize = intent.size.coerceIn(1f, 100f)
+                brushSize = intent.size.coerceIn(1f, 100f),
             )
 
             is EditorIntent.ChangeBrushColor -> state.copy(
-                brushColor = intent.color
+                brushColor = intent.color,
             )
 
             is EditorIntent.Undo -> {
@@ -86,8 +95,17 @@ object EditorReducer {
             }
 
             is EditorIntent.DismissError -> state.copy(error = null)
-
-            else -> state
+            is EditorIntent.ApplyCrop,
+            is EditorIntent.CancelCrop,
+            is EditorIntent.StartDrawing,
+            is EditorIntent.ContinueDrawing,
+            is EditorIntent.EndDrawing,
+            is EditorIntent.DetectFaces,
+            is EditorIntent.SelectFace,
+            is EditorIntent.CutFaces,
+            is EditorIntent.Save,
+            is EditorIntent.Export,
+            is EditorIntent.Share -> state
         }
     }
 
@@ -131,7 +149,7 @@ object EditorReducer {
         )
     }
 
-    private fun createSnapshot(state: EditorState): EditorSnapshot {
+    fun createSnapshot(state: EditorState): EditorSnapshot {
         return EditorSnapshot(
             timestamp = System.currentTimeMillis(),
             cropRect = state.cropRect,
