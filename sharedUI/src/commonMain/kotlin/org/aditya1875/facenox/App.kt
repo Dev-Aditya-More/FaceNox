@@ -16,8 +16,8 @@ fun App() {
             appTheme = AppTheme.DARK,
             isAmoled = true,
             isMaterialYou = false,
-            seedColor = Color(0xFFE8B67E), // Use orange from logo
-            paletteStyle = PaletteStyle.Vibrant
+            seedColor = Color(0xFFE8B67E),
+            paletteStyle = PaletteStyle.Expressive
         )
     ) {
         FaceNoxNavGraph()
