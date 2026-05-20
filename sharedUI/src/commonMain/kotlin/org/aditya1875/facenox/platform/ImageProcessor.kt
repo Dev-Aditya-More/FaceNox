@@ -6,13 +6,8 @@ import org.aditya1875.facenox.feature.screens.editor.EditorState
 
 // commonMain
 interface ImageProcessor {
-    suspend fun crop(
-        image: ImageBitmap,
-        rect: Rect
-    ): ImageBitmap
-
-    suspend fun processAndSave(
-        image: ImageBitmap,
-        edits: EditorState
-    ): String
+    suspend fun crop(image: ImageBitmap, rect: Rect): ImageBitmap
+    suspend fun rotate(image: ImageBitmap, degrees: Int): ImageBitmap
+    suspend fun blurRegion(image: ImageBitmap, rect: Rect): ImageBitmap
+    suspend fun processAndSave(image: ImageBitmap, edits: EditorState): String
 }

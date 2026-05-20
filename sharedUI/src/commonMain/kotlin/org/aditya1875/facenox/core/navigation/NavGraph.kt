@@ -71,12 +71,12 @@ fun FaceNoxNavGraph(
                 },
                 onSaveClick = { projectId ->
                     navController.navigate(
-                        Route.Processing(projectId, ProcessingOperation.SAVE)
+                        Route.Processing(projectId, ProcessingOperation.SAVE.name)
                     )
                 },
                 onExportClick = { projectId ->
                     navController.navigate(
-                        Route.Processing(projectId, ProcessingOperation.EXPORT)
+                        Route.Processing(projectId, ProcessingOperation.EXPORT.name)
                     )
                 }
             )
@@ -89,7 +89,7 @@ fun FaceNoxNavGraph(
                 ?.set("PROJECT_SAVED", true)
             ProcessingScreen(
                 projectId = processing.projectId,
-                operation = processing.operation,
+                operation = ProcessingOperation.valueOf(processing.operationName),
                 onComplete = {
                     navController.navigate(Route.Dashboard) {
                         popUpTo(Route.Dashboard) {

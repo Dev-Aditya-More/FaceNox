@@ -22,7 +22,7 @@ sealed interface Route {
     @Serializable
     data class Processing(
         val projectId: String,
-        val operation: ProcessingOperation
+        val operationName: String   // stores ProcessingOperation.name — enums can't be NavType in KMP
     ) : Route
 }
 

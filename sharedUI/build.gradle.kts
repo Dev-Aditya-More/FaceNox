@@ -64,6 +64,8 @@ kotlin {
             implementation(libs.androidx.activityCompose)
 
             implementation(libs.koin.android)
+
+            implementation(libs.androidx.graphics.core)
         }
 
         jvmMain.dependencies {

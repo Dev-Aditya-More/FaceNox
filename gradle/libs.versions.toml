@@ -1,25 +1,30 @@
 [versions]
 
 activityCompose = "1.9.0"
-kotlin = "2.3.0"
-compose-multiplatform = "1.10.0"
+coreSplashscreen = "1.2.0"
+graphicsCore = "1.0.4"
+kotlin = "2.3.20"
+compose-multiplatform = "1.10.2"
 material3 = "1.10.0-alpha05"
 agp = "8.12.3"
-androidx-activityCompose = "1.12.0"
+androidx-activityCompose = "1.13.0"
 kotlinx-coroutines = "1.10.2"
-ktor = "3.0.0"
-androidx-lifecycle = "2.10.0-alpha07"
-androidx-nav3 = "1.1.0-alpha01"
-kotlinx-serialization = "1.9.0"
-coil = "3.0.0-alpha08"
+ktor = "3.4.1"
+androidx-lifecycle = "2.10.0-beta01"
+androidx-nav3 = "1.1.0-alpha04"
+kotlinx-serialization = "1.10.0"
+coil = "3.4.0"
 materialIconsExtended = "1.7.3"
-materialKolor = "4.0.0"
+materialKolor = "4.1.1"
 mlkit-face-detection = "16.1.7"
-navigationCompose = "2.8.0-alpha10"
+navigationCompose = "2.9.2"
 koin = "4.1.1"
+subjectSegmentation = "16.0.0-beta1"
 
 [libraries]
 
+androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-graphics-core = { module = "androidx.graphics:graphics-core", version.ref = "graphicsCore" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 compose-ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "compose-multiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
@@ -53,11 +58,12 @@ compose-nav3 = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", v
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
-coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor", version.ref = "coil" }
+coil-network-ktor = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 mlkit-face-detection = { module = "com.google.mlkit:face-detection", version.ref = "mlkit-face-detection" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+subject-segmentation = { module = "com.google.mlkit:subject-segmentation", version.ref = "subjectSegmentation" }
 
 [plugins]
 

@@ -7,10 +7,15 @@ import java.awt.Frame
 
 class DesktopImagePicker : ImagePicker {
     override fun pickImage(onResult: (String?) -> Unit) {
-        val dialog = FileDialog(null as Frame?, "Pick Image")
+        val dialog = FileDialog(null as Frame?, "Select Image", FileDialog.LOAD)
+        dialog.setFilenameFilter { _, name ->
+            val lower = name.lowercase()
+            lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") ||
+                    lower.endsWith(".bmp") || lower.endsWith(".gif") || lower.endsWith(".webp")
+        }
         dialog.isVisible = true
-        val file = dialog.file ?: return
-        onResult("${dialog.directory}$file")
+        val file = dialog.file
+        onResult(if (file != null) "${dialog.directory}$file" else null)
     }
 }
 

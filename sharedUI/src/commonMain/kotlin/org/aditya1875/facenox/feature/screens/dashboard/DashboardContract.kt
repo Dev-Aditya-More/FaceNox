@@ -1,26 +1,21 @@
 package org.aditya1875.facenox.feature.screens.dashboard
 
-import androidx.compose.ui.graphics.ImageBitmap
+import kotlinx.serialization.Serializable
 
 
 // ==================== MODELS ====================
 
-/**
- * Represents a project in the dashboard
- */
+@Serializable
 data class Project(
     val id: String,
     val name: String,
     val imageUri: String,
-    val thumbnail: ImageBitmap? = null,
     val createdAt: Long,
     val modifiedAt: Long,
     val type: ProjectType
 )
 
-/**
- * Type of editing done on the project
- */
+@Serializable
 enum class ProjectType {
     BASIC_EDIT,
     FACE_CUT,

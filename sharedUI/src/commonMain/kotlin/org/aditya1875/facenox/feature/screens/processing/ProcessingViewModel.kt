@@ -8,14 +8,16 @@ import kotlinx.coroutines.launch
 import org.aditya1875.facenox.core.navigation.ProcessingOperation
 import org.aditya1875.facenox.feature.screens.dashboard.Project
 import org.aditya1875.facenox.feature.screens.dashboard.ProjectType
-import org.aditya1875.facenox.feature.screens.dashboard.models.ProjectStore
-import org.aditya1875.facenox.feature.screens.dashboard.models.ProjectSummary
 import org.aditya1875.facenox.feature.screens.editor.EditorSessionStore
+import org.aditya1875.facenox.feature.screens.editor.EditorState
 import org.aditya1875.facenox.platform.ImageProcessor
+import org.aditya1875.facenox.platform.ProjectRepository
 
 class ProcessingViewModel(
     private val projectId: String,
-    private val operation: ProcessingOperation
+    private val operation: ProcessingOperation,
+    private val imageProcessor: ImageProcessor,
+    private val projectRepository: ProjectRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<ProcessingState>(ProcessingState.Idle)
@@ -39,48 +41,61 @@ class ProcessingViewModel(
 
     private fun startProcessing() {
         viewModelScope.launch {
-            val snapshot = EditorSessionStore.get(projectId)
-                ?: error("Missing editor session")
+            val snapshot = EditorSessionStore.get(projectId) ?: run {
+                _state.value = ProcessingState.Error("Missing editor session", canRetry = false)
+                return@launch
+            }
 
             val steps = getProcessingSteps()
 
-            steps.forEachIndexed { index, step ->
+            steps.dropLast(1).forEachIndexed { index, step ->
                 _state.value = ProcessingState.Processing(
-                    progress = (index + 1) / steps.size.toFloat(),
+                    progress = (index + 1f) / steps.size,
                     currentStep = step,
                     totalSteps = steps.size
                 )
                 delay(300)
             }
 
-            _state.value = ProcessingState.Success(
-                outputUri = "content://facenox/output_$projectId.png"
+            _state.value = ProcessingState.Processing(
+                progress = (steps.size - 1f) / steps.size,
+                currentStep = steps.last(),
+                totalSteps = steps.size
             )
 
-            val outputUri = "content://facenox/output_$projectId.png"
+            val outputUri = try {
+                val editorState = EditorState(
+                    currentImage = snapshot.image,
+                    brightness = snapshot.brightness,
+                    contrast = snapshot.contrast,
+                    saturation = snapshot.saturation,
+                    appliedFilters = snapshot.appliedFilters,
+                    drawingPaths = snapshot.drawingPaths,
+                )
+                imageProcessor.processAndSave(snapshot.image, editorState)
+            } catch (e: Exception) {
+                _state.value = ProcessingState.Error(e.message ?: "Processing failed", canRetry = true)
+                return@launch
+            }
+
+            _state.value = ProcessingState.Success(outputUri = outputUri)
 
             val now = System.currentTimeMillis()
-
-            val existing = ProjectStore.get(projectId)
-
-            ProjectStore.upsert(
+            val existing = projectRepository.get(projectId)
+            projectRepository.upsert(
                 Project(
                     id = projectId,
                     name = existing?.name ?: "Edit ${projectId.takeLast(4)}",
                     imageUri = outputUri,
-                    thumbnail = null, // optional for now
                     createdAt = existing?.createdAt ?: now,
                     modifiedAt = now,
                     type = ProjectType.BASIC_EDIT
                 )
             )
 
-            _effect.emit(
-                ProcessingEffect.NavigateToDashboard(showSuccess = true)
-            )
+            _effect.emit(ProcessingEffect.NavigateToDashboard(showSuccess = true))
         }
     }
-
 
     private fun handleCancel() {
         viewModelScope.launch {
@@ -90,37 +105,24 @@ class ProcessingViewModel(
         }
     }
 
-    private fun handleRetry() {
-        startProcessing()
-    }
+    private fun handleRetry() { startProcessing() }
 
     private fun handleDismiss() {
-        viewModelScope.launch {
-            _effect.emit(ProcessingEffect.NavigateToDashboard(showSuccess = false))
-        }
+        viewModelScope.launch { _effect.emit(ProcessingEffect.NavigateToDashboard(showSuccess = false)) }
     }
 
-    private fun getProcessingSteps(): List<ProcessingStep> {
-        return when (operation) {
-            ProcessingOperation.SAVE -> listOf(
-                ProcessingStep.LOADING,
-                ProcessingStep.APPLYING_EDITS,
-                ProcessingStep.APPLYING_FILTERS,
-                ProcessingStep.COMPRESSING,
-                ProcessingStep.SAVING
-            )
-            ProcessingOperation.EXPORT -> listOf(
-                ProcessingStep.LOADING,
-                ProcessingStep.APPLYING_EDITS,
-                ProcessingStep.APPLYING_FILTERS,
-                ProcessingStep.COMPRESSING,
-                ProcessingStep.SAVING
-            )
-            ProcessingOperation.SHARE -> listOf(
-                ProcessingStep.LOADING,
-                ProcessingStep.APPLYING_EDITS,
-                ProcessingStep.COMPRESSING
-            )
-        }
+    private fun getProcessingSteps(): List<ProcessingStep> = when (operation) {
+        ProcessingOperation.SAVE, ProcessingOperation.EXPORT -> listOf(
+            ProcessingStep.LOADING,
+            ProcessingStep.APPLYING_EDITS,
+            ProcessingStep.APPLYING_FILTERS,
+            ProcessingStep.COMPRESSING,
+            ProcessingStep.SAVING
+        )
+        ProcessingOperation.SHARE -> listOf(
+            ProcessingStep.LOADING,
+            ProcessingStep.APPLYING_EDITS,
+            ProcessingStep.COMPRESSING
+        )
     }
 }

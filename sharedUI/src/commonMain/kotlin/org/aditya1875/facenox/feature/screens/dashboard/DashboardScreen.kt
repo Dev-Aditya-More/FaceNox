@@ -16,14 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
+import org.aditya1875.facenox.core.ui.WindowWidthSizeClass
+import org.aditya1875.facenox.core.ui.rememberWindowWidthSizeClass
 import org.koin.compose.viewmodel.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -41,8 +43,7 @@ fun DashboardScreen(
     var showDeleteDialog by remember { mutableStateOf(false) }
     var projectToDelete by remember { mutableStateOf<String?>(null) }
 
-    val savedStateHandle =
-        navController.currentBackStackEntry?.savedStateHandle
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
 
     LaunchedEffect(Unit) {
         savedStateHandle
@@ -61,15 +62,15 @@ fun DashboardScreen(
                 is DashboardEffect.NavigateToImageSelection -> onNewProject()
                 is DashboardEffect.NavigateToEditor -> onOpenProject(effect.projectId, effect.imageUri)
                 is DashboardEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is DashboardEffect.ShowError -> {
-                    snackbarHostState.showSnackbar(
-                        message = effect.message,
-                        duration = SnackbarDuration.Long
-                    )
-                }
+                is DashboardEffect.ShowError -> snackbarHostState.showSnackbar(
+                    message = effect.message,
+                    duration = SnackbarDuration.Long
+                )
             }
         }
     }
+
+    val windowSize = rememberWindowWidthSizeClass()
 
     Scaffold(
         topBar = {
@@ -140,9 +141,8 @@ fun DashboardScreen(
                 state.projects.isEmpty() -> EmptyState()
                 else -> ProjectsGrid(
                     projects = state.projects,
-                    onProjectClick = { project ->
-                        viewModel.onEvent(DashboardEvent.OpenProject(project.id))
-                    },
+                    windowSize = windowSize,
+                    onProjectClick = { project -> viewModel.onEvent(DashboardEvent.OpenProject(project.id)) },
                     onProjectDelete = { projectId ->
                         projectToDelete = projectId
                         showDeleteDialog = true
@@ -175,20 +175,14 @@ fun DashboardScreen(
                         showDeleteDialog = false
                         projectToDelete = null
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    )
-                ) {
-                    Text("Delete")
-                }
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Delete") }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
                     projectToDelete = null
-                }) {
-                    Text("Cancel")
-                }
+                }) { Text("Cancel") }
             }
         )
     }
@@ -197,16 +191,12 @@ fun DashboardScreen(
 @Composable
 private fun EmptyState() {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier = Modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
+            modifier = Modifier.size(120.dp).clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
@@ -217,18 +207,14 @@ private fun EmptyState() {
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
         Text(
             text = "No projects found",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground
         )
-
         Spacer(modifier = Modifier.height(8.dp))
-
         Text(
             text = "Create your first project!",
             style = MaterialTheme.typography.bodyMedium,
@@ -240,10 +226,7 @@ private fun EmptyState() {
 
 @Composable
 private fun LoadingState() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(
                 modifier = Modifier.size(48.dp),
@@ -262,11 +245,17 @@ private fun LoadingState() {
 @Composable
 private fun ProjectsGrid(
     projects: List<Project>,
+    windowSize: WindowWidthSizeClass,
     onProjectClick: (Project) -> Unit,
     onProjectDelete: (String) -> Unit
 ) {
+    val columns = when (windowSize) {
+        WindowWidthSizeClass.Compact  -> 2
+        WindowWidthSizeClass.Medium   -> 3
+        WindowWidthSizeClass.Expanded -> 4
+    }
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
+        columns = GridCells.Fixed(columns),
         contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -282,26 +271,24 @@ private fun ProjectsGrid(
 }
 
 @Composable
-private fun ProjectCard(
-    project: Project,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
+private fun ProjectCard(project: Project, onClick: () -> Unit, onDelete: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(0.75f),
+        modifier = Modifier.fillMaxWidth().aspectRatio(0.75f),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
+            if (project.imageUri.isNotEmpty()) {
+                AsyncImage(
+                    model = project.imageUri,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxSize().background(
                         Brush.linearGradient(
                             colors = listOf(
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
@@ -309,17 +296,19 @@ private fun ProjectCard(
                             )
                         )
                     ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Image,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Image,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                }
             }
 
-            Column(
+            // Gradient overlay for text readability
+            Box(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .fillMaxWidth()
@@ -330,28 +319,27 @@ private fun ProjectCard(
                     )
                     .padding(12.dp)
             ) {
-                Text(
-                    text = project.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                Column {
                     Text(
-                        text = formatDate(project.modifiedAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f)
+                        text = project.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
-
-                    ProjectTypeBadge(type = project.type)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = formatDate(project.modifiedAt),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        ProjectTypeBadge(type = project.type)
+                    }
                 }
             }
 
@@ -381,28 +369,14 @@ private fun ProjectTypeBadge(type: ProjectType) {
         ProjectType.FACE_CUT -> Triple(Icons.Default.Face, "Face", Color(0xFF2196F3))
         ProjectType.BACKGROUND_REMOVED -> Triple(Icons.Default.AutoFixHigh, "BG", Color(0xFFFF9800))
     }
-
-    Surface(
-        shape = RoundedCornerShape(8.dp),
-        color = color.copy(alpha = 0.8f),
-    ) {
+    Surface(shape = RoundedCornerShape(8.dp), color = color.copy(alpha = 0.8f)) {
         Row(
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = Color.White
-            )
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(12.dp), tint = Color.White)
+            Text(text = text, style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -410,9 +384,7 @@ private fun ProjectTypeBadge(type: ProjectType) {
 @Composable
 private fun ErrorBanner(error: String?, onDismiss: () -> Unit) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.errorContainer,
         tonalElevation = 4.dp
@@ -427,24 +399,11 @@ private fun ErrorBanner(error: String?, onDismiss: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Error,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-                Text(
-                    text = error.toString(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onErrorContainer
-                )
+                Icon(imageVector = Icons.Default.Error, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                Text(text = error.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer)
             }
-
             IconButton(onClick = onDismiss) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Dismiss",
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
+                Icon(imageVector = Icons.Default.Close, contentDescription = "Dismiss", tint = MaterialTheme.colorScheme.onErrorContainer)
             }
         }
     }

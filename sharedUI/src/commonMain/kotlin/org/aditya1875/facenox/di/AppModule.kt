@@ -11,10 +11,11 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 expect val platformAppModule: Module
+
 @OptIn(KoinInternalApi::class)
 val appModule = module {
 
-    viewModel { DashboardViewModel() }
+    viewModel { DashboardViewModel(get()) }
 
     viewModel { ImageSelectionViewModel() }
 
@@ -23,14 +24,17 @@ val appModule = module {
             projectId = projectId,
             imageUri = imageUri,
             imageLoader = get(),
-            imageProcessor = get()
+            imageProcessor = get(),
+            faceDetector = get()
         )
     }
 
     viewModel { (projectId: String, operation: ProcessingOperation) ->
         ProcessingViewModel(
             projectId = projectId,
-            operation = operation
+            operation = operation,
+            imageProcessor = get(),
+            projectRepository = get()
         )
     }
 }
