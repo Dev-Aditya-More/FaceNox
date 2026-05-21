@@ -31,5 +31,9 @@ compose.desktop {
                 bundleID = "org.aditya1875.facenox.desktopApp"
             }
         }
+
+        buildTypes.release.proguard {
+            isEnabled.set(false)
+        }
     }
 }

@@ -10,13 +10,28 @@ android {
     namespace = "org.aditya1875.facenox.androidApp"
     compileSdk = 36
 
+    buildTypes {
+        debug{
+            isMinifyEnabled = false
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
     defaultConfig {
         minSdk = 23
         targetSdk = 36
 
         applicationId = "org.aditya1875.facenox.androidApp"
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
     }
 
     compileOptions {
