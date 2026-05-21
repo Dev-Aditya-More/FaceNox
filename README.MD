@@ -24,10 +24,10 @@
 ## Screenshots
 
 <p align="center">
-  <img src="assets/screenshots/screenshot_1.png" width="22%" alt="Dashboard"/>
-  <img src="assets/screenshots/screenshot_2.png" width="22%" alt="Editor"/>
-  <img src="assets/screenshots/screenshot_3.png" width="22%" alt="Face Detection"/>
-  <img src="assets/screenshots/screenshot_4.png" width="22%" alt="Filters"/>
+  <img src="androidApp/src/main/assets/screenshots/screenshot_1.png" width="22%" alt="Dashboard"/>
+  <img src="androidApp/src/main/assets/screenshots/screenshot_2.png" width="22%" alt="Editor"/>
+  <img src="androidApp/src/main/assets/screenshots/screenshot_3.png" width="22%" alt="Face Detection"/>
+  <img src="androidApp/src/main/assets/screenshots/screenshot_4.png" width="22%" alt="Filters"/>
 </p>
 
 ---
