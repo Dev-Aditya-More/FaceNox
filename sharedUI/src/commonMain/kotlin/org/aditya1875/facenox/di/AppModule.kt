@@ -5,6 +5,8 @@ import org.aditya1875.facenox.feature.screens.dashboard.DashboardViewModel
 import org.aditya1875.facenox.feature.screens.editor.EditorViewModel
 import org.aditya1875.facenox.feature.screens.imageselection.ImageSelectionViewModel
 import org.aditya1875.facenox.feature.screens.processing.ProcessingViewModel
+import org.aditya1875.facenox.feature.screens.settings.ThemeSettingsViewModel
+import org.aditya1875.facenox.theme.ThemeStateHolder
 import org.koin.core.annotation.KoinInternalApi
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
@@ -15,7 +17,11 @@ expect val platformAppModule: Module
 @OptIn(KoinInternalApi::class)
 val appModule = module {
 
+    single { ThemeStateHolder(get()) }
+
     viewModel { DashboardViewModel(get()) }
+
+    viewModel { ThemeSettingsViewModel(get()) }
 
     viewModel { ImageSelectionViewModel() }
 

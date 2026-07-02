@@ -9,8 +9,10 @@ import org.aditya1875.facenox.platform.FileProjectRepository
 import org.aditya1875.facenox.platform.ImageLoader
 import org.aditya1875.facenox.platform.ImagePicker
 import org.aditya1875.facenox.platform.ImageProcessor
+import org.aditya1875.facenox.platform.FileThemeSettingsRepository
 import org.aditya1875.facenox.platform.MlKitFaceDetector
 import org.aditya1875.facenox.platform.ProjectRepository
+import org.aditya1875.facenox.platform.ThemeSettingsRepository
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
@@ -27,6 +29,11 @@ actual val platformAppModule = module {
     single<ProjectRepository> {
         val dir = androidContext().filesDir.absolutePath + "/facenox"
         FileProjectRepository(dir)
+    }
+
+    single<ThemeSettingsRepository> {
+        val dir = androidContext().filesDir.absolutePath + "/facenox"
+        FileThemeSettingsRepository(dir)
     }
 
     single<FaceDetector> { MlKitFaceDetector() }

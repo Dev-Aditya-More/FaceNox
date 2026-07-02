@@ -11,6 +11,7 @@ import org.aditya1875.facenox.feature.screens.dashboard.DashboardScreen
 import org.aditya1875.facenox.feature.screens.editor.EditorScreen
 import org.aditya1875.facenox.feature.screens.imageselection.ImageSelectionScreen
 import org.aditya1875.facenox.feature.screens.processing.ProcessingScreen
+import org.aditya1875.facenox.feature.screens.settings.ThemeSettingsScreen
 import org.aditya1875.facenox.feature.screens.splash.SplashScreen
 import org.aditya1875.facenox.platform.ImagePicker
 import org.aditya1875.facenox.platform.rememberImagePicker
@@ -42,6 +43,17 @@ fun FaceNoxNavGraph(
                 navController = navController,
                 onOpenProject = { projectId, imageUri ->
                     navController.navigate(Route.Editor(projectId, imageUri))
+                },
+                onOpenSettings = {
+                    navController.navigate(Route.Settings)
+                }
+            )
+        }
+
+        composable<Route.Settings> {
+            ThemeSettingsScreen(
+                onBackClick = {
+                    navController.navigateUp()
                 }
             )
         }

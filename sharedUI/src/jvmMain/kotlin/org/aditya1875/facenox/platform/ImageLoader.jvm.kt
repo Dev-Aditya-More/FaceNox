@@ -8,7 +8,7 @@ import java.io.File
 class DesktopImageLoader : ImageLoader {
     override suspend fun loadImage(uri: String): ImageBitmap? {
         return try {
-            val file = File(uri)
+            val file = File(uri.removePrefix("file://"))
             if (!file.exists()) return null
 
             val bytes = file.readBytes()

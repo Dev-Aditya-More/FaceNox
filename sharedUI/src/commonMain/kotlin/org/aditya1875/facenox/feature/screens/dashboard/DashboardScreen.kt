@@ -36,6 +36,7 @@ fun DashboardScreen(
     onNewProject: () -> Unit,
     onOpenProject: (projectId: String, imageUri: String) -> Unit,
     navController: NavHostController,
+    onOpenSettings: () -> Unit,
     viewModel: DashboardViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -82,11 +83,6 @@ fun DashboardScreen(
                         fontWeight = FontWeight.Bold
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
                 actions = {
                     Surface(
                         shape = RoundedCornerShape(20.dp),
@@ -111,6 +107,9 @@ fun DashboardScreen(
                                 fontWeight = FontWeight.Medium
                             )
                         }
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(imageVector = Icons.Default.Settings, contentDescription = "Theme Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

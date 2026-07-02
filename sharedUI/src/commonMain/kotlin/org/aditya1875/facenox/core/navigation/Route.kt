@@ -14,6 +14,9 @@ sealed interface Route {
     data object ImageSelection : Route
 
     @Serializable
+    data object Settings : Route
+
+    @Serializable
     data class Editor(
         val projectId: String? = null,
         val imageUri: String

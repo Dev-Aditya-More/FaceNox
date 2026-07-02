@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -344,14 +343,8 @@ private fun EditorToolPanel(
 
 @Composable
 private fun EditorCanvas(state: EditorState, onIntent: (EditorIntent) -> Unit) {
-    var scale by remember { mutableFloatStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
     var imageDisplaySize by remember { mutableStateOf(IntSize.Zero) }
-
-    LaunchedEffect(state.selectedTool) {
-        scale = 1f
-        offset = Offset.Zero
-    }
+    val latestState = rememberUpdatedState(state)
 
     Box(
         modifier = Modifier.fillMaxSize().background(Color(0xFF1E1E1E)),
@@ -375,16 +368,7 @@ private fun EditorCanvas(state: EditorState, onIntent: (EditorIntent) -> Unit) {
                         .fillMaxWidth(0.9f)
                         .aspectRatio(imageBitmap.width.toFloat() / imageBitmap.height.toFloat())
                         .clip(RoundedCornerShape(8.dp))
-                        .onSizeChanged { imageDisplaySize = it }
-                        .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offset.x, translationY = offset.y)
-                        .pointerInput(state.selectedTool) {
-                            if (state.selectedTool == EditorTool.CROP) {
-                                detectTransformGestures { _, pan, zoom, _ ->
-                                    scale = (scale * zoom).coerceIn(0.5f, 3f)
-                                    offset += pan
-                                }
-                            }
-                        },
+                        .onSizeChanged { imageDisplaySize = it },
                     contentScale = ContentScale.Fit,
                     colorFilter = ColorFilter.colorMatrix(colorMatrix)
                 )
@@ -394,14 +378,95 @@ private fun EditorCanvas(state: EditorState, onIntent: (EditorIntent) -> Unit) {
                         .fillMaxWidth(0.9f)
                         .aspectRatio(imageBitmap.width.toFloat() / imageBitmap.height.toFloat())
                         .clip(RoundedCornerShape(8.dp))
-                        .graphicsLayer(scaleX = scale, scaleY = scale, translationX = offset.x, translationY = offset.y)
                         .pointerInput(state.selectedTool) {
-                            if (state.selectedTool == EditorTool.DRAW) {
-                                detectDragGestures(
+                            when (state.selectedTool) {
+                                EditorTool.DRAW -> detectDragGestures(
                                     onDragStart = { onIntent(EditorIntent.StartDrawing(it)) },
                                     onDrag = { change, _ -> onIntent(EditorIntent.ContinueDrawing(change.position)) },
                                     onDragEnd = { onIntent(EditorIntent.EndDrawing) }
                                 )
+                                EditorTool.CROP -> {
+                                    var handle = CropHandle.NONE
+                                    var activeRect: Rect? = null
+                                    val handleTouchRadius = 48f
+                                    val minCropSize = 40f
+
+                                    detectDragGestures(
+                                        onDragStart = { pos ->
+                                            val image = latestState.value.currentImage ?: return@detectDragGestures
+                                            val rect = latestState.value.cropRect ?: return@detectDragGestures
+                                            val scaleX = size.width / image.width.toFloat()
+                                            val scaleY = size.height / image.height.toFloat()
+                                            val displayRect = Rect(
+                                                left = rect.left * scaleX,
+                                                top = rect.top * scaleY,
+                                                right = rect.right * scaleX,
+                                                bottom = rect.bottom * scaleY
+                                            )
+                                            handle = when {
+                                                distance(pos, displayRect.topLeft) < handleTouchRadius -> CropHandle.TOP_LEFT
+                                                distance(pos, Offset(displayRect.right, displayRect.top)) < handleTouchRadius -> CropHandle.TOP_RIGHT
+                                                distance(pos, Offset(displayRect.left, displayRect.bottom)) < handleTouchRadius -> CropHandle.BOTTOM_LEFT
+                                                distance(pos, displayRect.bottomRight) < handleTouchRadius -> CropHandle.BOTTOM_RIGHT
+                                                displayRect.contains(pos) -> CropHandle.MOVE
+                                                else -> CropHandle.NONE
+                                            }
+                                            activeRect = rect
+                                        },
+                                        onDrag = { change, dragAmount ->
+                                            if (handle == CropHandle.NONE) return@detectDragGestures
+                                            change.consume()
+                                            val image = latestState.value.currentImage ?: return@detectDragGestures
+                                            val rect = activeRect ?: return@detectDragGestures
+                                            val scaleX = size.width / image.width.toFloat()
+                                            val scaleY = size.height / image.height.toFloat()
+                                            val dx = dragAmount.x / scaleX
+                                            val dy = dragAmount.y / scaleY
+                                            val imgW = image.width.toFloat()
+                                            val imgH = image.height.toFloat()
+
+                                            val newRect = when (handle) {
+                                                CropHandle.MOVE -> {
+                                                    val nx = (rect.left + dx).coerceIn(0f, imgW - rect.width)
+                                                    val ny = (rect.top + dy).coerceIn(0f, imgH - rect.height)
+                                                    Rect(nx, ny, nx + rect.width, ny + rect.height)
+                                                }
+                                                CropHandle.TOP_LEFT -> Rect(
+                                                    left = (rect.left + dx).coerceIn(0f, rect.right - minCropSize),
+                                                    top = (rect.top + dy).coerceIn(0f, rect.bottom - minCropSize),
+                                                    right = rect.right,
+                                                    bottom = rect.bottom
+                                                )
+                                                CropHandle.TOP_RIGHT -> Rect(
+                                                    left = rect.left,
+                                                    top = (rect.top + dy).coerceIn(0f, rect.bottom - minCropSize),
+                                                    right = (rect.right + dx).coerceIn(rect.left + minCropSize, imgW),
+                                                    bottom = rect.bottom
+                                                )
+                                                CropHandle.BOTTOM_LEFT -> Rect(
+                                                    left = (rect.left + dx).coerceIn(0f, rect.right - minCropSize),
+                                                    top = rect.top,
+                                                    right = rect.right,
+                                                    bottom = (rect.bottom + dy).coerceIn(rect.top + minCropSize, imgH)
+                                                )
+                                                CropHandle.BOTTOM_RIGHT -> Rect(
+                                                    left = rect.left,
+                                                    top = rect.top,
+                                                    right = (rect.right + dx).coerceIn(rect.left + minCropSize, imgW),
+                                                    bottom = (rect.bottom + dy).coerceIn(rect.top + minCropSize, imgH)
+                                                )
+                                                CropHandle.NONE -> rect
+                                            }
+                                            activeRect = newRect
+                                            onIntent(EditorIntent.UpdateCropRect(newRect))
+                                        },
+                                        onDragEnd = {
+                                            handle = CropHandle.NONE
+                                            activeRect = null
+                                        }
+                                    )
+                                }
+                                else -> {}
                             }
                         }
                 ) {
@@ -497,6 +562,14 @@ private fun EditorCanvas(state: EditorState, onIntent: (EditorIntent) -> Unit) {
 // ---------------------------------------------------------------------------
 // Panels (shared between mobile bottom-sheet and desktop side-panel)
 // ---------------------------------------------------------------------------
+
+private enum class CropHandle { NONE, MOVE, TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT }
+
+private fun distance(a: Offset, b: Offset): Float {
+    val dx = a.x - b.x
+    val dy = a.y - b.y
+    return kotlin.math.sqrt(dx * dx + dy * dy)
+}
 
 data class CropRatio(val name: String, val ratio: Float?)
 
