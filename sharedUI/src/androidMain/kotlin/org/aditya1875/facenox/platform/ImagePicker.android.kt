@@ -10,30 +10,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 class AndroidImagePicker(
-    activity: ComponentActivity
+    private val activity: ComponentActivity
 ) : ImagePicker {
 
-    private val launcher =
+    private var callback: ((String?) -> Unit)? = null
+
+    private val galleryLauncher =
         activity.registerForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri ->
             callback?.invoke(uri?.toString())
         }
 
-    private var callback: ((String?) -> Unit)? = null
-
     override fun pickImage(onResult: (String?) -> Unit) {
         callback = onResult
-        launcher.launch("image/*")
+        galleryLauncher.launch("image/*")
     }
 }
 
 @Composable
 actual fun rememberImagePicker(): ImagePicker {
-
     var callback by remember { mutableStateOf<((String?) -> Unit)?>(null) }
 
-    val launcher = rememberLauncherForActivityResult(
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         callback?.invoke(uri?.toString())
@@ -43,9 +42,8 @@ actual fun rememberImagePicker(): ImagePicker {
         object : ImagePicker {
             override fun pickImage(onResult: (String?) -> Unit) {
                 callback = onResult
-                launcher.launch("image/*")
+                galleryLauncher.launch("image/*")
             }
         }
     }
 }
-

@@ -20,6 +20,7 @@ mlkit-face-detection = "16.1.7"
 navigationCompose = "2.9.2"
 koin = "4.1.1"
 subjectSegmentation = "16.0.0-beta1"
+camerax = "1.4.1"
 
 [libraries]
 
@@ -64,6 +65,10 @@ material-kolor = { module = "com.materialkolor:material-kolor", version.ref = "m
 mlkit-face-detection = { module = "com.google.mlkit:face-detection", version.ref = "mlkit-face-detection" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 subject-segmentation = { module = "com.google.mlkit:subject-segmentation", version.ref = "subjectSegmentation" }
+androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { module = "androidx.camera:camera-view", version.ref = "camerax" }
 
 [plugins]
 

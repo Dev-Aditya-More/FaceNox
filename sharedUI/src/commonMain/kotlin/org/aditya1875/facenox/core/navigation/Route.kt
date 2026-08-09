@@ -14,6 +14,9 @@ sealed interface Route {
     data object ImageSelection : Route
 
     @Serializable
+    data object Camera : Route
+
+    @Serializable
     data object Settings : Route
 
     @Serializable

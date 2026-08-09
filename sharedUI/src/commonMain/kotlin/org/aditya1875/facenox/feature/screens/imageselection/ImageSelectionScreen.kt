@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.aditya1875.facenox.platform.ImagePicker
+import org.aditya1875.facenox.platform.isCameraCaptureSupported
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -26,6 +27,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun ImageSelectionScreen(
     onImageSelected: (String) -> Unit,
     onBackClick: () -> Unit,
+    onCameraClick: () -> Unit,
     viewModel: ImageSelectionViewModel = koinViewModel(),
     picker: ImagePicker
 ) {
@@ -73,7 +75,7 @@ fun ImageSelectionScreen(
                             uri?.let(onImageSelected)
                         }
                     },
-                    onCameraClick = { /* TODO: Camera */ }
+                    onCameraClick = onCameraClick
                 )
             }
 
@@ -155,7 +157,7 @@ private fun SelectionContent(
             title = "Camera",
             description = "Take a new photo",
             onClick = onCameraClick,
-            enabled = false
+            enabled = isCameraCaptureSupported
         )
     }
 }

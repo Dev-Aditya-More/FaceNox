@@ -13,6 +13,7 @@ import org.aditya1875.facenox.feature.screens.imageselection.ImageSelectionScree
 import org.aditya1875.facenox.feature.screens.processing.ProcessingScreen
 import org.aditya1875.facenox.feature.screens.settings.ThemeSettingsScreen
 import org.aditya1875.facenox.feature.screens.splash.SplashScreen
+import org.aditya1875.facenox.platform.CameraCaptureScreen
 import org.aditya1875.facenox.platform.ImagePicker
 import org.aditya1875.facenox.platform.rememberImagePicker
 
@@ -69,7 +70,21 @@ fun FaceNoxNavGraph(
                 onBackClick = {
                     navController.navigateUp()
                 },
+                onCameraClick = {
+                    navController.navigate(Route.Camera)
+                },
                 picker = picker
+            )
+        }
+
+        composable<Route.Camera> {
+            CameraCaptureScreen(
+                onImageCaptured = { imageUri ->
+                    navController.navigate(Route.Editor(null, imageUri))
+                },
+                onClose = {
+                    navController.navigateUp()
+                }
             )
         }
 
